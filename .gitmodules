@@ -1,0 +1,6 @@
+[submodule "templates/parachain/pallets/nftaa"]
+	path = templates/parachain/pallets/nftaa
+	url = https://github.com/decenzio/nftaa.git
+[submodule "templates/parachain/pallets/pallet-nftaa"]
+	path = templates/parachain/pallets/pallet-nftaa
+	url = https://github.com/decenzio/nftaa.git
