@@ -312,6 +312,18 @@ mod runtime {
 	// Template
 	#[runtime::pallet_index(50)]
 	pub type TemplatePallet = pallet_parachain_template;
+
+	// Pallet NFTs
+	#[runtime::pallet_index(51)]
+	pub type PalletNFTS = pallet_nfts;
+
+	// Pallet utility
+	#[runtime::pallet_index(52)]
+	pub type PalletUtility = pallet_utility;
+
+	// Pallet NFTAA
+	#[runtime::pallet_index(53)]
+	pub type PalletNFTAA = pallet_nftaa;
 }
 
 #[docify::export(register_validate_block)]
