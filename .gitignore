@@ -40,4 +40,5 @@ runtime/wasm/target/
 substrate.code-workspace
 target/
 *.scale
-justfile
+# justfile
+binaries/zombienet

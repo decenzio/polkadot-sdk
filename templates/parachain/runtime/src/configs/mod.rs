@@ -382,5 +382,5 @@ impl pallet_utility::Config for Runtime {
 impl pallet_nftaa::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
-	type NftaaWeightInfo = pallet_nftaa::weights::SubstrateWeight<Runtime>;
+	type NftaaWeightInfo = ();
 }

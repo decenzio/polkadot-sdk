@@ -80,6 +80,7 @@ std = [
     "scale-info/std",
     "serde_json/std",
     "substrate-wasm-builder",
+    "pallet-nftaa/std",
 ]
 
 runtime-benchmarks = [
@@ -87,12 +88,14 @@ runtime-benchmarks = [
     "hex-literal",
     "pallet-parachain-template/runtime-benchmarks",
     "polkadot-sdk/runtime-benchmarks",
+    "pallet-nftaa/runtime-benchmarks",
 ]
 
 try-runtime = [
     "cumulus-pallet-parachain-system/try-runtime",
     "pallet-parachain-template/try-runtime",
     "polkadot-sdk/try-runtime",
+    "pallet-nftaa/try-runtime",
 ]
 
 # Enable the metadata hash generation.
