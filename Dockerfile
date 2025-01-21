@@ -22,7 +22,7 @@ RUN rustup component add rust-src --toolchain nightly
 WORKDIR /usr/src/app
 
 # Clone the repository
-RUN git clone https://github.com/decenzio/polkadot-sdk.git && git checkout dev
+RUN git clone https://github.com/decenzio/polkadot-sdk.git --branch dev --recurse-submodules
 
 # Configure Cargo to use Git CLI
 RUN mkdir -p ~/.cargo && echo "[net]\ngit-fetch-with-cli = true" > ~/.cargo/config
