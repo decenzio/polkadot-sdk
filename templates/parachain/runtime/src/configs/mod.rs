@@ -383,4 +383,5 @@ impl pallet_nftaa::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
 	type NftaaWeightInfo = ();
+	type NftsWeightInfo = ();
 }
