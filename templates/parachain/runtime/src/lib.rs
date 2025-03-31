@@ -315,7 +315,7 @@ mod runtime {
 
 	// Pallet NFTs
 	#[runtime::pallet_index(51)]
-	pub type PalletNFTS = pallet_nfts;
+	pub type Nfts = pallet_nfts;
 
 	// Pallet utility
 	#[runtime::pallet_index(52)]
@@ -323,7 +323,7 @@ mod runtime {
 
 	// Pallet NFTAA
 	#[runtime::pallet_index(53)]
-	pub type PalletNFTAA = pallet_nftaa;
+	pub type Nftaa = pallet_nftaa;
 }
 
 #[docify::export(register_validate_block)]
