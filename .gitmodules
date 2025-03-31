@@ -1,3 +1,4 @@
 [submodule "templates/parachain/pallets/pallet-nftaa"]
 	path = templates/parachain/pallets/pallet-nftaa
 	url = https://github.com/decenzio/pallet-nftaa
+	branch = main
