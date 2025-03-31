@@ -42,3 +42,4 @@ target/
 *.scale
 # justfile
 binaries/zombienet
+rustc-ice-*
