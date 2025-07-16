@@ -36,10 +36,10 @@ use snowbridge_outbound_queue_primitives::{
 	v2::{Command, Initializer, Message, SendMessage},
 	OperatingMode, SendError,
 };
-use snowbridge_pallet_system::{ForeignToNativeId, NativeToForeignId};
+use snowbridge_pallet_system::ForeignToNativeId;
 use sp_core::{H160, H256};
 use sp_io::hashing::blake2_256;
-use sp_runtime::traits::MaybeEquivalence;
+use sp_runtime::traits::MaybeConvert;
 use sp_std::prelude::*;
 use xcm::prelude::*;
 use xcm_executor::traits::ConvertLocation;
@@ -125,7 +125,7 @@ pub mod pallet {
 		/// - `impl_address`: The address of the implementation contract.
 		/// - `impl_code_hash`: The codehash of the implementation contract.
 		/// - `initializer`: Optionally call an initializer on the implementation contract.
-		#[pallet::call_index(3)]
+		#[pallet::call_index(0)]
 		#[pallet::weight((<T as pallet::Config>::WeightInfo::upgrade(), DispatchClass::Operational))]
 		pub fn upgrade(
 			origin: OriginFor<T>,
@@ -159,7 +159,7 @@ pub mod pallet {
 		/// Fee required: No
 		///
 		/// - `origin`: Must be `GovernanceOrigin`
-		#[pallet::call_index(4)]
+		#[pallet::call_index(1)]
 		#[pallet::weight((<T as pallet::Config>::WeightInfo::set_operating_mode(), DispatchClass::Operational))]
 		pub fn set_operating_mode(origin: OriginFor<T>, mode: OperatingMode) -> DispatchResult {
 			let origin_location = T::GovernanceOrigin::ensure_origin(origin)?;
@@ -179,14 +179,14 @@ pub mod pallet {
 		/// - `sender`: The original sender initiating the call on AH
 		/// - `asset_id`: Location of the asset (relative to this chain)
 		/// - `metadata`: Metadata to include in the instantiated ERC20 contract on Ethereum
-		/// - `fee`: Ether to pay for the execution cost on Ethereum
-		#[pallet::call_index(0)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as pallet::Config>::WeightInfo::register_token())]
 		pub fn register_token(
 			origin: OriginFor<T>,
 			sender: Box<VersionedLocation>,
 			asset_id: Box<VersionedLocation>,
 			metadata: AssetMetadata,
+			amount: u128,
 		) -> DispatchResult {
 			T::FrontendOrigin::ensure_origin(origin)?;
 
@@ -200,7 +200,6 @@ pub mod pallet {
 				.ok_or(Error::<T>::LocationConversionFailed)?;
 
 			if !ForeignToNativeId::<T>::contains_key(token_id) {
-				NativeToForeignId::<T>::insert(location.clone(), token_id);
 				ForeignToNativeId::<T>::insert(token_id, location.clone());
 			}
 
@@ -212,7 +211,7 @@ pub mod pallet {
 			};
 
 			let message_origin = Self::location_to_message_origin(sender_location)?;
-			Self::send(message_origin, command, 0)?;
+			Self::send(message_origin, command, amount)?;
 
 			Self::deposit_event(Event::<T>::RegisterToken {
 				location: location.into(),
@@ -226,14 +225,12 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Send `command` to the Gateway from a specific origin/agent
 		fn send(origin: H256, command: Command, fee: u128) -> DispatchResult {
-			let mut message = Message {
+			let message = Message {
 				origin,
-				id: Default::default(),
+				id: frame_system::unique((origin, &command, fee)).into(),
 				fee,
 				commands: BoundedVec::try_from(vec![command]).unwrap(),
 			};
-			let hash = sp_io::hashing::blake2_256(&message.encode());
-			message.id = hash.into();
 
 			let ticket = <T as pallet::Config>::OutboundQueue::validate(&message)
 				.map_err(|err| Error::<T>::Send(err))?;
@@ -257,12 +254,9 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> MaybeEquivalence<TokenId, Location> for Pallet<T> {
-		fn convert(foreign_id: &TokenId) -> Option<Location> {
-			ForeignToNativeId::<T>::get(foreign_id)
-		}
-		fn convert_back(location: &Location) -> Option<TokenId> {
-			NativeToForeignId::<T>::get(location)
+	impl<T: Config> MaybeConvert<TokenId, Location> for Pallet<T> {
+		fn maybe_convert(foreign_id: TokenId) -> Option<Location> {
+			snowbridge_pallet_system::Pallet::<T>::maybe_convert(foreign_id)
 		}
 	}
 }

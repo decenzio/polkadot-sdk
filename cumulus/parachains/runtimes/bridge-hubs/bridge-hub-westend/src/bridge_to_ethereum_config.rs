@@ -65,7 +65,6 @@ pub type SnowbridgeExporterV2 = EthereumBlobExporterV2<
 	UniversalLocation,
 	EthereumNetwork,
 	snowbridge_pallet_outbound_queue_v2::Pallet<Runtime>,
-	snowbridge_core::AgentIdOf,
 	EthereumSystemV2,
 	AssetHubParaId,
 >;
@@ -84,6 +83,7 @@ parameter_types! {
 		multiplier: FixedU128::from_rational(1, 1),
 	};
 	pub AssetHubFromEthereum: Location = Location::new(1, [GlobalConsensus(RelayNetwork::get()), Parachain(ASSET_HUB_ID)]);
+	pub AssetHubUniversalLocation: InteriorLocation = [GlobalConsensus(RelayNetwork::get()), Parachain(ASSET_HUB_ID)].into();
 	pub AssetHubLocation: Location = Location::new(1, [Parachain(ASSET_HUB_ID)]);
 	pub EthereumUniversalLocation: InteriorLocation = [GlobalConsensus(EthereumNetwork::get())].into();
 	pub InboundQueueV2Location: InteriorLocation = [PalletInstance(INBOUND_QUEUE_PALLET_INDEX_V2)].into();
@@ -144,6 +144,8 @@ impl snowbridge_pallet_inbound_queue_v2::Config for Runtime {
 		EthereumGatewayAddress,
 		EthereumUniversalLocation,
 		AssetHubFromEthereum,
+		AssetHubUniversalLocation,
+		AccountId,
 	>;
 	type AccountToLocation = xcm_builder::AliasesIntoAccountId32<
 		xcm_config::RelayNetwork,
@@ -370,7 +372,6 @@ pub mod benchmark_helpers {
 }
 
 pub(crate) mod migrations {
-	use alloc::vec::Vec;
 	use frame_support::pallet_prelude::*;
 	use snowbridge_core::TokenId;
 
@@ -396,18 +397,6 @@ pub(crate) mod migrations {
 				Some(xcm::v5::Location::try_from(pre).expect("valid location"))
 			};
 			snowbridge_pallet_system::ForeignToNativeId::<T>::translate_values(translate_westend);
-
-			let old_keys = OldNativeToForeignId::<T>::iter_keys().collect::<Vec<_>>();
-			for old_key in old_keys {
-				if let Some(old_val) = OldNativeToForeignId::<T>::get(&old_key) {
-					snowbridge_pallet_system::NativeToForeignId::<T>::insert(
-						&xcm::v5::Location::try_from(old_key.clone()).expect("valid location"),
-						old_val,
-					);
-				}
-				OldNativeToForeignId::<T>::remove(old_key);
-				weight.saturating_accrue(T::DbWeight::get().reads_writes(1, 2));
-			}
 
 			weight
 		}

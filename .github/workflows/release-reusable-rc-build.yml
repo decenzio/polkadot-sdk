@@ -15,13 +15,18 @@ on:
         type: string
 
       release_tag:
-        description: Tag matching the actual release candidate with the format polkadpt-stableYYMM(-rcX) or plkadot-stableYYMM-X(-rcX)
+        description: Tag matching the actual release candidate with the format polkadot-stableYYMM(-rcX) or polkadot-stableYYMM-X(-rcX)
         required: true
         type: string
 
       target:
         description: Target triple for which the artifacts are being built (e.g. x86_64-unknown-linux-gnu)
         required: true
+        type: string
+
+      features:
+        description: Features to be enabled when building the binary (must be a list of comma-separated features)
+        required: false
         type: string
 
     secrets:
@@ -101,7 +106,7 @@ jobs:
       - name: Build binary
         run: |
           git config --global --add safe.directory "${GITHUB_WORKSPACE}" #avoid "detected dubious ownership" error
-          ./.github/scripts/release/build-linux-release.sh ${{ matrix.binaries }} ${{ inputs.package }}
+          ./.github/scripts/release/build-linux-release.sh ${{ matrix.binaries }} ${{ inputs.package }} ${{ inputs.features }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
@@ -204,7 +209,7 @@ jobs:
       - name: Install pgpkkms
         run: |
           # Install pgpkms that is used to sign built artifacts
-          python3 -m pip  install "pgpkms @ git+https://github.com/paritytech-release/pgpkms.git@e7f806f99e9be5c52f0b4a536b7d4ef9c3e695ed"
+          python3 -m pip  install "pgpkms @ git+https://github.com/paritytech-release/pgpkms.git@e7f806f99e9be5c52f0b4a536b7d4ef9c3e695ed" --break-system-packages
 
       - name: Import gpg keys
         shell: bash
@@ -216,7 +221,7 @@ jobs:
       - name: Build binary
         run: |
           git config --global --add safe.directory "${GITHUB_WORKSPACE}" #avoid "detected dubious ownership" error
-          ./.github/scripts/release/build-macos-release.sh ${{ matrix.binaries }} ${{ inputs.package }}
+          ./.github/scripts/release/build-macos-release.sh ${{ matrix.binaries }} ${{ inputs.package }} ${{ inputs.features }}
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3

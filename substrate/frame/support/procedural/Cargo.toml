@@ -1,6 +1,6 @@
 [package]
 name = "frame-support-procedural"
-version = "23.0.0"
+version = "33.0.1"
 authors.workspace = true
 edition.workspace = true
 license = "Apache-2.0"
@@ -23,26 +23,27 @@ cfg-expr = { workspace = true }
 derive-syn-parse = { workspace = true }
 docify = { workspace = true }
 expander = { workspace = true }
-frame-support-procedural-tools = { workspace = true, default-features = true }
+frame-support-procedural-tools.default-features = true
+frame-support-procedural-tools.workspace = true
 itertools = { workspace = true }
 macro_magic = { features = ["proc_support"], workspace = true }
 proc-macro-warning = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
-sp-crypto-hashing = { workspace = true }
+sp-crypto-hashing.workspace = true
 syn = { features = ["full", "parsing", "visit-mut"], workspace = true }
 
 [dev-dependencies]
 codec = { features = ["derive", "max-encoded-len"], workspace = true }
-frame-support = { workspace = true }
-frame-system = { workspace = true }
+frame-support = { default-features = false, workspace = true }
+frame-system = { default-features = false, workspace = true }
 pretty_assertions = { workspace = true }
 regex = { workspace = true }
 scale-info = { features = ["derive"], workspace = true }
-sp-core = { workspace = true }
-sp-io = { workspace = true }
-sp-metadata-ir = { workspace = true }
-sp-runtime = { features = ["serde"], workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-io = { default-features = false, workspace = true }
+sp-metadata-ir = { default-features = false, workspace = true }
+sp-runtime = { features = ["serde"], default-features = false, workspace = true }
 static_assertions = { workspace = true }
 
 [features]

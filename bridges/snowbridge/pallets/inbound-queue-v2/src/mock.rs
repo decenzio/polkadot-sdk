@@ -14,7 +14,7 @@ use snowbridge_core::TokenId;
 use snowbridge_inbound_queue_primitives::{v2::MessageToXcm, Log, Proof, VerificationError};
 use sp_core::H160;
 use sp_runtime::{
-	traits::{IdentityLookup, MaybeEquivalence},
+	traits::{IdentityLookup, MaybeConvert},
 	BuildStorage,
 };
 use sp_std::{convert::From, default::Default, marker::PhantomData};
@@ -76,12 +76,9 @@ impl<T: Config> BenchmarkHelper<T> for Test {
 }
 
 pub struct MockTokenIdConvert;
-impl MaybeEquivalence<TokenId, Location> for MockTokenIdConvert {
-	fn convert(_id: &TokenId) -> Option<Location> {
+impl MaybeConvert<TokenId, Location> for MockTokenIdConvert {
+	fn maybe_convert(_id: TokenId) -> Option<Location> {
 		Some(Location::parent())
-	}
-	fn convert_back(_loc: &Location) -> Option<TokenId> {
-		None
 	}
 }
 
@@ -101,6 +98,7 @@ parameter_types! {
 	pub UniversalLocation: InteriorLocation =
 		[GlobalConsensus(ByGenesis(WESTEND_GENESIS_HASH)), Parachain(1002)].into();
 	pub AssetHubFromEthereum: Location = Location::new(1,[GlobalConsensus(ByGenesis(WESTEND_GENESIS_HASH)),Parachain(1000)]);
+	pub AssetHubUniversalLocation: InteriorLocation = [GlobalConsensus(ByGenesis(WESTEND_GENESIS_HASH)), Parachain(1000)].into();
 	pub SnowbridgeReward: BridgeReward = BridgeReward::Snowbridge;
 	pub const CreateAssetCall: [u8;2] = [53, 0];
 	pub const CreateAssetDeposit: u128 = 10_000_000_000u128;
@@ -155,6 +153,8 @@ impl inbound_queue_v2::Config for Test {
 		GatewayAddress,
 		UniversalLocation,
 		AssetHubFromEthereum,
+		AssetHubUniversalLocation,
+		AccountId,
 	>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type Helper = Test;

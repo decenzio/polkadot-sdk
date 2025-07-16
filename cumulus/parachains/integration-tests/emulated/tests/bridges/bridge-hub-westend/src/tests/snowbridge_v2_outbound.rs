@@ -32,7 +32,7 @@ use xcm::v5::AssetTransferFilter;
 #[derive(Encode, Decode, Debug, PartialEq, Clone, TypeInfo)]
 pub enum EthereumSystemFrontendCall {
 	#[codec(index = 1)]
-	RegisterToken { asset_id: Box<VersionedLocation>, metadata: AssetMetadata },
+	RegisterToken { asset_id: Box<VersionedLocation>, metadata: AssetMetadata, fee_asset: Asset },
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -105,7 +105,7 @@ fn send_weth_from_asset_hub_to_ethereum() {
 		let reward_account = AssetHubWestendReceiver::get();
 		let receipt = DeliveryReceipt {
 			gateway: EthereumGatewayAddress::get(),
-			nonce: 0,
+			nonce: 1,
 			reward_address: reward_account.into(),
 			topic: H256::zero(),
 			success: true,
@@ -131,6 +131,8 @@ pub fn register_relay_token_from_asset_hub_with_sudo() {
 	AssetHubWestend::execute_with(|| {
 		type RuntimeOrigin = <AssetHubWestend as Chain>::RuntimeOrigin;
 
+		let fees_asset = Asset { id: AssetId(ethereum()), fun: Fungible(1) };
+
 		assert_ok!(
 			<AssetHubWestend as AssetHubWestendPallet>::SnowbridgeSystemFrontend::register_token(
 				RuntimeOrigin::root(),
@@ -139,8 +141,17 @@ pub fn register_relay_token_from_asset_hub_with_sudo() {
 					name: "wnd".as_bytes().to_vec().try_into().unwrap(),
 					symbol: "wnd".as_bytes().to_vec().try_into().unwrap(),
 					decimals: 12,
-				}
+				},
+				fees_asset
 			)
+		);
+	});
+
+	BridgeHubWestend::execute_with(|| {
+		type RuntimeEvent = <BridgeHubWestend as Chain>::RuntimeEvent;
+		assert_expected_events!(
+			BridgeHubWestend,
+			vec![RuntimeEvent::EthereumOutboundQueueV2(snowbridge_pallet_outbound_queue_v2::Event::MessageQueued{ .. }) => {},]
 		);
 	});
 }
@@ -150,8 +161,13 @@ pub fn register_usdt_from_owner_on_asset_hub() {
 	fund_on_bh();
 	register_assets_on_ah();
 	fund_on_ah();
+	set_up_eth_and_dot_pool();
 	AssetHubWestend::execute_with(|| {
 		type RuntimeOrigin = <AssetHubWestend as Chain>::RuntimeOrigin;
+		type RuntimeEvent = <AssetHubWestend as Chain>::RuntimeEvent;
+
+		let fees_asset =
+			Asset { id: AssetId(Location::parent()), fun: Fungible(1_000_000_000u128) };
 
 		assert_ok!(
 			<AssetHubWestend as AssetHubWestendPallet>::SnowbridgeSystemFrontend::register_token(
@@ -161,8 +177,13 @@ pub fn register_usdt_from_owner_on_asset_hub() {
 					name: "usdt".as_bytes().to_vec().try_into().unwrap(),
 					symbol: "usdt".as_bytes().to_vec().try_into().unwrap(),
 					decimals: 6,
-				}
+				},
+				fees_asset
 			)
+		);
+		assert_expected_events!(
+			AssetHubWestend,
+			vec![RuntimeEvent::AssetConversion(pallet_asset_conversion::Event::SwapExecuted { .. }) => {},]
 		);
 	});
 
@@ -264,7 +285,7 @@ fn transfer_relay_token_from_ah() {
 		let reward_account = AssetHubWestendReceiver::get();
 		let receipt = DeliveryReceipt {
 			gateway: EthereumGatewayAddress::get(),
-			nonce: 0,
+			nonce: 1,
 			reward_address: reward_account.into(),
 			topic: H256::zero(),
 			success: true,
@@ -351,7 +372,7 @@ fn send_weth_and_dot_from_asset_hub_to_ethereum() {
 		let reward_account = AssetHubWestendReceiver::get();
 		let receipt = DeliveryReceipt {
 			gateway: EthereumGatewayAddress::get(),
-			nonce: 0,
+			nonce: 1,
 			reward_address: reward_account.into(),
 			topic: H256::zero(),
 			success: true,
@@ -447,7 +468,7 @@ fn transact_with_agent_from_asset_hub() {
 		let reward_account = AssetHubWestendReceiver::get();
 		let receipt = DeliveryReceipt {
 			gateway: EthereumGatewayAddress::get(),
-			nonce: 0,
+			nonce: 1,
 			reward_address: reward_account.into(),
 			topic: H256::zero(),
 			success: true,
@@ -531,7 +552,7 @@ fn transact_with_agent_from_asset_hub_without_any_asset_transfer() {
 		let reward_account = AssetHubWestendReceiver::get();
 		let receipt = DeliveryReceipt {
 			gateway: EthereumGatewayAddress::get(),
-			nonce: 0,
+			nonce: 1,
 			reward_address: reward_account.into(),
 			success: true,
 			topic: Default::default(),
@@ -589,6 +610,7 @@ fn register_token_from_penpal() {
 			EthereumSystemFrontendCall::RegisterToken {
 				asset_id: Box::new(VersionedLocation::from(foreign_asset_at_asset_hub)),
 				metadata: Default::default(),
+				fee_asset: remote_fee_asset_on_ethereum.clone(),
 			},
 		);
 
@@ -648,7 +670,7 @@ fn register_token_from_penpal() {
 		let reward_account = AssetHubWestendReceiver::get();
 		let receipt = DeliveryReceipt {
 			gateway: EthereumGatewayAddress::get(),
-			nonce: 0,
+			nonce: 1,
 			reward_address: reward_account.into(),
 			topic: H256::zero(),
 			success: true,
