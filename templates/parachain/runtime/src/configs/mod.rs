@@ -331,7 +331,7 @@ parameter_types! {
 	pub const UniquesMetadataDepositBase: Balance = 0 * UNIT;
 	pub const AttributeDepositBase: Balance = 0 * UNIT;
 	pub const DepositPerByte: Balance = 0 * UNIT;
-	pub const UniquesStringLimit: u32 = 32;
+	pub const UniquesStringLimit: u32 = 256;
 	pub const ApprovalsLimit: u32 = 1;
 	pub const ItemAttributesApprovalsLimit: u32 = 1;
 	pub const MaxTips: u32 = 1;
