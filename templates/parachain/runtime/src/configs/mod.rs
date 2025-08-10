@@ -326,8 +326,8 @@ pub const UNIT: Balance = 1;
 parameter_types! {
 	pub const CollectionDeposit: Balance = 0 * UNIT; // 1 UNIT deposit to create asset collection
 	pub const ItemDeposit: Balance = 0 * UNIT; // 1/100 UNIT deposit to create asset item
-	pub const KeyLimit: u32 = 32;
-	pub const ValueLimit: u32 = 64;
+	pub const KeyLimit: u32 = 64;
+	pub const ValueLimit: u32 = 256;
 	pub const UniquesMetadataDepositBase: Balance = 0 * UNIT;
 	pub const AttributeDepositBase: Balance = 0 * UNIT;
 	pub const DepositPerByte: Balance = 0 * UNIT;

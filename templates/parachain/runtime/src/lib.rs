@@ -320,7 +320,7 @@ mod runtime {
 
 	// Pallet utility
 	#[runtime::pallet_index(52)]
-	pub type PalletUtility = pallet_utility;
+	pub type Utility = pallet_utility;
 
 	// Pallet NFTAA
 	#[runtime::pallet_index(53)]
