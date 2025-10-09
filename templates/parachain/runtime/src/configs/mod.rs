@@ -447,7 +447,7 @@ impl pallet_staking::Config for Runtime {
 	type BondingDuration = BondingDuration;
 	type SlashDeferDuration = SlashDeferDuration;
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type SessionInterface = ();
+	type SessionInterface = Session;
 	type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;
 	type MaxExposurePageSize = MaxExposurePageSize;
 	type NextNewSession = Session;
