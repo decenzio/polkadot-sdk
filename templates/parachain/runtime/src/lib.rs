@@ -329,6 +329,10 @@ mod runtime {
 	// Pallet Staking
 	#[runtime::pallet_index(54)]
 	pub type Staking = pallet_staking;
+
+	// Pallet Nomination Pools
+	#[runtime::pallet_index(55)]
+	pub type NominationPools = pallet_nomination_pools;
 }
 
 #[docify::export(register_validate_block)]

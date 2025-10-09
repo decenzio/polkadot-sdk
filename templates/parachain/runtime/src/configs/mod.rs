@@ -62,8 +62,9 @@ use super::{
 	AccountId, Aura, Balance, Balances, Block, BlockNumber, CollatorSelection, ConsensusHook, Hash,
 	MessageQueue, Nonce, OriginCaller, PalletInfo, ParachainSystem, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, Session,
-	SessionKeys, System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, EXISTENTIAL_DEPOSIT,
-	HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, SLOT_DURATION, VERSION,
+	SessionKeys, Staking, System, WeightToFee, XcmpQueue, AVERAGE_ON_INITIALIZE_RATIO, 
+	EXISTENTIAL_DEPOSIT, HOURS, MAXIMUM_BLOCK_WEIGHT, MICRO_UNIT, NORMAL_DISPATCH_RATIO, 
+	SLOT_DURATION, VERSION,
 };
 use xcm_config::{RelayLocation, XcmOriginToTransactDispatchOrigin};
 
@@ -387,7 +388,6 @@ impl pallet_nftaa::Config for Runtime {
 	type NftsWeightInfo = ();
 }
 
-// Build reward curve for staking
 pallet_staking_reward_curve::build! {
 	const REWARD_CURVE: sp_runtime::curve::PiecewiseLinear<'static> = curve!(
 		min_inflation: 0_025_000,
@@ -400,36 +400,23 @@ pallet_staking_reward_curve::build! {
 }
 
 parameter_types! {
-	// Staking pallet parameters
 	pub const SessionsPerEra: sp_staking::SessionIndex = 6;
-	pub const BondingDuration: sp_staking::EraIndex = 28;
-	pub const SlashDeferDuration: sp_staking::EraIndex = 27;
+	pub const BondingDuration: sp_staking::EraIndex = 24 * 28;
+	pub const SlashDeferDuration: sp_staking::EraIndex = 24 * 7; // 1/4 the bonding duration.
 	pub const RewardCurve: &'static sp_runtime::curve::PiecewiseLinear<'static> = &REWARD_CURVE;
-	pub const MaxExposurePageSize: u32 = 64;
 	pub const MaxNominators: u32 = 64;
-	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
-	pub const StakingMaxWinners: u32 = 100;
-	pub StakingElectionBounds: frame_election_provider_support::bounds::ElectionBounds = 
-		frame_election_provider_support::bounds::ElectionBoundsBuilder::default().build();
+	pub const MaxControllersInDeprecationBatch: u32 = 5900;
+	pub OffchainRepeat: BlockNumber = 5;
+	pub HistoryDepth: u32 = 84;
 }
+
+/// Upper limit on the number of NPOS nominations.
+const MAX_QUOTA_NOMINATIONS: u32 = 16;
 
 pub struct StakingBenchmarkingConfig;
 impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
-	type MaxValidators = ConstU32<100>;
-	type MaxNominators = ConstU32<100>;
-}
-
-pub struct OnChainSeqPhragmen;
-impl frame_election_provider_support::onchain::Config for OnChainSeqPhragmen {
-	type System = Runtime;
-	type Solver = frame_election_provider_support::SequentialPhragmen<
-		AccountId,
-		polkadot_runtime_common::elections::OnChainAccuracy,
-	>;
-	type DataProvider = pallet_staking::Pallet<Runtime>;
-	type WeightInfo = ();
-	type MaxWinners = StakingMaxWinners;
-	type Bounds = StakingElectionBounds;
+	type MaxNominators = ConstU32<1000>;
+	type MaxValidators = ConstU32<1000>;
 }
 
 impl pallet_staking::Config for Runtime {
@@ -437,30 +424,74 @@ impl pallet_staking::Config for Runtime {
 	type Currency = Balances;
 	type CurrencyBalance = Balance;
 	type UnixTime = pallet_timestamp::Pallet<Runtime>;
-	type CurrencyToVote = polkadot_runtime_common::CurrencyToVote;
+	type CurrencyToVote = sp_staking::currency_to_vote::U128CurrencyToVote;
 	type RewardRemainder = ();
-	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeEvent = RuntimeEvent;
-	type Slash = ();
-	type Reward = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type Slash = (); // send the slashed funds to the treasury.
+	type Reward = (); // rewards are minted from the void
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDuration = BondingDuration;
 	type SlashDeferDuration = SlashDeferDuration;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type SessionInterface = ();
 	type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;
-	type MaxExposurePageSize = MaxExposurePageSize;
 	type NextNewSession = Session;
-	type ElectionProvider = frame_election_provider_support::onchain::OnChainExecution<OnChainSeqPhragmen>;
+	type MaxExposurePageSize = ConstU32<256>;
+	type ElectionProvider = frame_election_provider_support::NoElection<(
+		AccountId,
+		BlockNumber,
+		pallet_staking::Pallet<Runtime>,
+		MaxNominators,
+	)>;
 	type GenesisElectionProvider = Self::ElectionProvider;
 	type VoterList = pallet_staking::UseNominatorsAndValidatorsMap<Runtime>;
-	type TargetList = pallet_staking::UseValidatorsMap<Runtime>;
-	type NominationsQuota = pallet_staking::FixedNominationsQuota<16>;
+	type NominationsQuota = pallet_staking::FixedNominationsQuota<MAX_QUOTA_NOMINATIONS>;
+	type TargetList = pallet_staking::UseValidatorsMap<Self>;
 	type MaxUnlockingChunks = ConstU32<32>;
-	type MaxControllersInDeprecationBatch = ConstU32<100>;
-	type HistoryDepth = ConstU32<84>;
+	type MaxControllersInDeprecationBatch = MaxControllersInDeprecationBatch;
+	type HistoryDepth = HistoryDepth;
 	type EventListeners = ();
-	type WeightInfo = ();
+	type WeightInfo = pallet_staking::weights::SubstrateWeight<Runtime>;
 	type BenchmarkingConfig = StakingBenchmarkingConfig;
-	type Filter = frame_support::traits::Everything;
+	type Filter = frame_support::traits::Nothing;
+}
+
+parameter_types! {
+	pub const PostUnbondPoolsWindow: u32 = 4;
+	pub const NominationPoolsPalletId: PalletId = PalletId(*b"py/nopls");
+	pub const MaxPointsToBalance: u8 = 10;
+}
+
+use sp_runtime::traits::Convert;
+pub struct BalanceToU256;
+impl Convert<Balance, sp_core::U256> for BalanceToU256 {
+	fn convert(balance: Balance) -> sp_core::U256 {
+		sp_core::U256::from(balance)
+	}
+}
+pub struct U256ToBalance;
+impl Convert<sp_core::U256, Balance> for U256ToBalance {
+	fn convert(n: sp_core::U256) -> Balance {
+		n.try_into().unwrap_or(Balance::max_value())
+	}
+}
+
+impl pallet_nomination_pools::Config for Runtime {
+	type WeightInfo = ();
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type RewardCounter = sp_runtime::FixedU128;
+	type BalanceToU256 = BalanceToU256;
+	type U256ToBalance = U256ToBalance;
+	type StakeAdapter = pallet_nomination_pools::adapter::TransferStake<Self, Staking>;
+	type PostUnbondingPoolsWindow = PostUnbondPoolsWindow;
+	type MaxMetadataLen = ConstU32<256>;
+	type MaxUnbonding = ConstU32<8>;
+	type PalletId = NominationPoolsPalletId;
+	type MaxPointsToBalance = MaxPointsToBalance;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type BlockNumberProvider = System;
+	type Filter = frame_support::traits::Nothing;
 }

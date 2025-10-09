@@ -64,6 +64,7 @@ pallet-utility = { workspace = true, default-features = false }
 pallet-nftaa = { workspace = true, default-features = false }
 pallet-staking = { workspace = true, default-features = false }
 pallet-staking-reward-curve = { workspace = true, default-features = false }
+pallet-nomination-pools = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -80,6 +81,7 @@ std = [
     "pallet-nfts/std",
     "pallet-utility/std",
     "pallet-staking/std",
+    "pallet-nomination-pools/std",
 ]
 
 runtime-benchmarks = [
@@ -91,6 +93,7 @@ runtime-benchmarks = [
     "pallet-nfts/runtime-benchmarks",
     "pallet-utility/runtime-benchmarks",
     "pallet-staking/runtime-benchmarks",
+    "pallet-nomination-pools/runtime-benchmarks",
 ]
 
 try-runtime = [
@@ -101,6 +104,7 @@ try-runtime = [
     "pallet-nfts/try-runtime",
     "pallet-utility/try-runtime",
     "pallet-staking/try-runtime",
+    "pallet-nomination-pools/try-runtime",
 ]
 
 # Enable the metadata hash generation.

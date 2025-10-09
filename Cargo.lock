@@ -13599,6 +13599,7 @@ dependencies = [
  "log",
  "pallet-nftaa",
  "pallet-nfts",
+ "pallet-nomination-pools",
  "pallet-parachain-template",
  "pallet-staking",
  "pallet-staking-reward-curve",
