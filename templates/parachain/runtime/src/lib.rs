@@ -325,6 +325,10 @@ mod runtime {
 	// Pallet NFTAA
 	#[runtime::pallet_index(53)]
 	pub type Nftaa = pallet_nftaa;
+
+	// Pallet Staking
+	#[runtime::pallet_index(54)]
+	pub type Staking = pallet_staking;
 }
 
 #[docify::export(register_validate_block)]

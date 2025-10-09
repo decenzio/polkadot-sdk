@@ -62,6 +62,8 @@ smallvec = { workspace = true, default-features = true }
 pallet-nfts = { workspace = true, default-features = false }
 pallet-utility = { workspace = true, default-features = false }
 pallet-nftaa = { workspace = true, default-features = false }
+pallet-staking = { workspace = true, default-features = false }
+pallet-staking-reward-curve = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]
@@ -75,6 +77,9 @@ std = [
     "serde_json/std",
     "substrate-wasm-builder",
     "pallet-nftaa/std",
+    "pallet-nfts/std",
+    "pallet-utility/std",
+    "pallet-staking/std",
 ]
 
 runtime-benchmarks = [
@@ -83,6 +88,9 @@ runtime-benchmarks = [
     "pallet-parachain-template/runtime-benchmarks",
     "polkadot-sdk/runtime-benchmarks",
     "pallet-nftaa/runtime-benchmarks",
+    "pallet-nfts/runtime-benchmarks",
+    "pallet-utility/runtime-benchmarks",
+    "pallet-staking/runtime-benchmarks",
 ]
 
 try-runtime = [
@@ -90,6 +98,9 @@ try-runtime = [
     "pallet-parachain-template/try-runtime",
     "polkadot-sdk/try-runtime",
     "pallet-nftaa/try-runtime",
+    "pallet-nfts/try-runtime",
+    "pallet-utility/try-runtime",
+    "pallet-staking/try-runtime",
 ]
 
 # Enable the metadata hash generation.

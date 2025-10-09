@@ -13600,6 +13600,8 @@ dependencies = [
  "pallet-nftaa",
  "pallet-nfts",
  "pallet-parachain-template",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
  "pallet-utility",
  "parity-scale-codec",
  "polkadot-sdk 2503.1.1",

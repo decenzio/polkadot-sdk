@@ -386,3 +386,81 @@ impl pallet_nftaa::Config for Runtime {
 	type NftaaWeightInfo = ();
 	type NftsWeightInfo = ();
 }
+
+// Build reward curve for staking
+pallet_staking_reward_curve::build! {
+	const REWARD_CURVE: sp_runtime::curve::PiecewiseLinear<'static> = curve!(
+		min_inflation: 0_025_000,
+		max_inflation: 0_100_000,
+		ideal_stake: 0_500_000,
+		falloff: 0_050_000,
+		max_piece_count: 40,
+		test_precision: 0_005_000,
+	);
+}
+
+parameter_types! {
+	// Staking pallet parameters
+	pub const SessionsPerEra: sp_staking::SessionIndex = 6;
+	pub const BondingDuration: sp_staking::EraIndex = 28;
+	pub const SlashDeferDuration: sp_staking::EraIndex = 27;
+	pub const RewardCurve: &'static sp_runtime::curve::PiecewiseLinear<'static> = &REWARD_CURVE;
+	pub const MaxExposurePageSize: u32 = 64;
+	pub const MaxNominators: u32 = 64;
+	pub const OffendingValidatorsThreshold: Perbill = Perbill::from_percent(17);
+	pub const StakingMaxWinners: u32 = 100;
+	pub StakingElectionBounds: frame_election_provider_support::bounds::ElectionBounds = 
+		frame_election_provider_support::bounds::ElectionBoundsBuilder::default().build();
+}
+
+pub struct StakingBenchmarkingConfig;
+impl pallet_staking::BenchmarkingConfig for StakingBenchmarkingConfig {
+	type MaxValidators = ConstU32<100>;
+	type MaxNominators = ConstU32<100>;
+}
+
+pub struct OnChainSeqPhragmen;
+impl frame_election_provider_support::onchain::Config for OnChainSeqPhragmen {
+	type System = Runtime;
+	type Solver = frame_election_provider_support::SequentialPhragmen<
+		AccountId,
+		polkadot_runtime_common::elections::OnChainAccuracy,
+	>;
+	type DataProvider = pallet_staking::Pallet<Runtime>;
+	type WeightInfo = ();
+	type MaxWinners = StakingMaxWinners;
+	type Bounds = StakingElectionBounds;
+}
+
+impl pallet_staking::Config for Runtime {
+	type OldCurrency = Balances;
+	type Currency = Balances;
+	type CurrencyBalance = Balance;
+	type UnixTime = pallet_timestamp::Pallet<Runtime>;
+	type CurrencyToVote = polkadot_runtime_common::CurrencyToVote;
+	type RewardRemainder = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeEvent = RuntimeEvent;
+	type Slash = ();
+	type Reward = ();
+	type SessionsPerEra = SessionsPerEra;
+	type BondingDuration = BondingDuration;
+	type SlashDeferDuration = SlashDeferDuration;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type SessionInterface = ();
+	type EraPayout = pallet_staking::ConvertCurve<RewardCurve>;
+	type MaxExposurePageSize = MaxExposurePageSize;
+	type NextNewSession = Session;
+	type ElectionProvider = frame_election_provider_support::onchain::OnChainExecution<OnChainSeqPhragmen>;
+	type GenesisElectionProvider = Self::ElectionProvider;
+	type VoterList = pallet_staking::UseNominatorsAndValidatorsMap<Runtime>;
+	type TargetList = pallet_staking::UseValidatorsMap<Runtime>;
+	type NominationsQuota = pallet_staking::FixedNominationsQuota<16>;
+	type MaxUnlockingChunks = ConstU32<32>;
+	type MaxControllersInDeprecationBatch = ConstU32<100>;
+	type HistoryDepth = ConstU32<84>;
+	type EventListeners = ();
+	type WeightInfo = ();
+	type BenchmarkingConfig = StakingBenchmarkingConfig;
+	type Filter = frame_support::traits::Everything;
+}
